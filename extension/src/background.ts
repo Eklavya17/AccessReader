@@ -133,12 +133,26 @@ async function handleElementSelection(
 async function moveMouseToCoordinates(x: number, y: number): Promise<void> {
   console.error(`Moving mouse to coordinates: x=${x}, y=${y}`);
   // Placeholder for actual mouse movement implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Mouse movement complete");
-      resolve();
-    }, 100);
-  });
+  const endpointUrl = 'http://localhost:5000/move_mouse'; // Update with your Flask server URL
+  try {
+    const response = await fetch(endpointUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ x, y })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    console.log("Mouse movement command sent to server, response received.");
+    const responseData = await response.json();
+    console.log("Server response:", responseData.message);
+  } catch (error) {
+    console.error("Error sending mouse coordinates to server:", error);
+  }
 }
 
 async function handleNavigation(data: NavigationData, tabId?: number): Promise<void> {
@@ -191,10 +205,25 @@ async function getClickPoints(
   userPrefs: UserPreferences
 ): Promise<ClickPoint[]> {
   // Placeholder - implement actual vision model integration
-  return [
-    { x: 800, y: 183 },
-    { x: 200, y: 200 }
-  ];
+  const response = await fetch('http://localhost:5000/get_click_points', { // Update the URL to match your Flask server's address
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      screenshot: screenshot,
+      intent: intent,
+      numPoints: numPoints,
+      userPrefs: userPrefs
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.coordinates as ClickPoint[];
 }
 
 async function generateReadableContent(
